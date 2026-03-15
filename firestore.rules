@@ -1,0 +1,20 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Chat Sessions
+    match /chat_sessions/{sessionId} {
+      // Users can only read/write their own sessions
+      allow read, write: if request.auth != null
+                         && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid;
+
+      // Messages sub-collection
+      match /messages/{messageId} {
+        allow read, write: if request.auth != null
+                           && get(/databases/$(database)/documents/chat_sessions/$(sessionId)).data.userId == request.auth.uid;
+      }
+    }
+  }
+}
